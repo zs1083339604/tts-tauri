@@ -1,0 +1,23 @@
+1
+00:00:00,100 --> 00:00:00,700
+Got it
+
+2
+00:00:01,062 --> 00:00:03,212
+You want to iterate through a PHP array
+
+3
+00:00:03,387 --> 00:00:07,412
+identify and remove elements where the value is an empty string
+
+4
+00:00:07,712 --> 00:00:11,375
+including strings composed of multiple spaces or newlines
+
+5
+00:00:11,750 --> 00:00:12,812
+and thenre-index
+
+6
+00:00:12,825 --> 00:00:13,425
+the array

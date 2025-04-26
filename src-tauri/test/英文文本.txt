@@ -1,0 +1,1 @@
+Got it! You want to iterate through a PHP array, identify and remove elements where the value is an empty string (including strings composed of multiple spaces or newlines), and then re-index the array.
