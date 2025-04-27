@@ -1,6 +1,6 @@
+use std::collections::VecDeque;
 use std::fs::File;
 use std::io::Write;
-use std::collections::VecDeque;
 
 use super::custom_result::CustomResult;
 
@@ -23,7 +23,10 @@ impl SubMaker {
 
     pub fn feed(&mut self, msg: &serde_json::Value) -> Result<CustomResult, CustomResult> {
         if msg["Type"] != "WordBoundary" {
-            return Err(CustomResult::error(Some("错误的Message类型，仅支持'WordBoundary'".to_string()), None));
+            return Err(CustomResult::error(
+                Some("错误的Message类型，仅支持'WordBoundary'".to_string()),
+                None,
+            ));
         }
 
         let offset = msg["Data"]["Offset"].as_u64().unwrap();
@@ -72,11 +75,18 @@ impl SubMaker {
 
     pub fn merge_by_punctuation(&mut self, all_text: &str) -> Result<CustomResult, CustomResult> {
         if all_text.is_empty() {
-            return Err(CustomResult::error(Some("你选择了标点分句，但参考句子是空的".to_string()), None));
+            return Err(CustomResult::error(
+                Some("你选择了标点分句，但参考句子是空的".to_string()),
+                None,
+            ));
         }
 
-        let rule = regex::Regex::new(r#"[。！？？，；,()\[\]（）【】{}、\.\?!;:<>《》「」『』“”‘’"—…\-\n]+"#).map_err(|e| CustomResult::error(Some(e.to_string()), None))?;
-        let sentences: Vec<&str> = rule.split(all_text)
+        let rule = regex::Regex::new(
+            r#"[。！？？，；,()\[\]（）【】{}、\.\?!;:<>《》「」『』“”‘’"—…\-\n]+"#,
+        )
+        .map_err(|e| CustomResult::error(Some(e.to_string()), None))?;
+        let sentences: Vec<&str> = rule
+            .split(all_text)
             .filter(|s| !s.trim().is_empty())
             .collect();
 
@@ -99,9 +109,12 @@ impl SubMaker {
             }
 
             // 判断当前和下一个字幕是否为英文、数字
-            let is_alphanumeric = regex::Regex::new(r"^[a-zA-Z0-9\s]+$").map_err(|e| CustomResult::error(Some(e.to_string()), None))?;
+            let is_alphanumeric = regex::Regex::new(r"^[a-zA-Z0-9\s]+$")
+                .map_err(|e| CustomResult::error(Some(e.to_string()), None))?;
             let next_cue_content = self.cues.get(current_cue_index).map(|c| &c.content);
-            if is_alphanumeric.is_match(&cue.content) && next_cue_content.map_or(false, |c| is_alphanumeric.is_match(c)) {
+            if is_alphanumeric.is_match(&cue.content)
+                && next_cue_content.map_or(false, |c| is_alphanumeric.is_match(c))
+            {
                 if let Some(ref mut c) = current_cue {
                     c.content.push(' ');
                 }
@@ -109,7 +122,10 @@ impl SubMaker {
 
             // 如果当前字幕内容包含当前句子的内容，则完成一个句子
             if let (Some(ref mut c), Some(sentence)) = (&mut current_cue, current_sentence) {
-                if c.content.replace(" ", "").contains(&sentence.replace(" ", "")) {
+                if c.content
+                    .replace(" ", "")
+                    .contains(&sentence.replace(" ", ""))
+                {
                     new_cues.push(c.clone());
                     current_cue = None;
                     current_sentence_index += 1;
@@ -129,14 +145,19 @@ impl SubMaker {
     }
 
     pub fn get_srt(&self) -> String {
-        self.cues.iter().map(|cue| {
-            format!("{}\n{} --> {}\n{}\n",
-                cue.index,
-                cue.start,
-                cue.end,
-                cue.content.trim()
-            )
-        }).collect::<Vec<String>>().join("\n")
+        self.cues
+            .iter()
+            .map(|cue| {
+                format!(
+                    "{}\n{} --> {}\n{}\n",
+                    cue.index,
+                    cue.start,
+                    cue.end,
+                    cue.content.trim()
+                )
+            })
+            .collect::<Vec<String>>()
+            .join("\n")
     }
 
     fn reset_index(&mut self) {
@@ -156,7 +177,13 @@ impl SubMaker {
 }
 
 // 写入 SRT 文件
-pub fn generate_srt(messages: &[serde_json::Value], srt_path: &str, option: &str, number: i32, all_text: Option<&str>) -> Result<CustomResult, CustomResult> {
+pub fn generate_srt(
+    messages: &[serde_json::Value],
+    srt_path: &str,
+    option: &str,
+    number: i32,
+    all_text: Option<&str>,
+) -> Result<CustomResult, CustomResult> {
     let mut maker = SubMaker::new();
 
     for msg in messages {
@@ -178,7 +205,9 @@ pub fn generate_srt(messages: &[serde_json::Value], srt_path: &str, option: &str
     }
 
     let srt_content = maker.get_srt();
-    let mut file = File::create(srt_path).map_err(|e| CustomResult::error(Some(e.to_string()), None))?;
-    file.write_all(srt_content.as_bytes()).map_err(|e| CustomResult::error(Some(e.to_string()), None))?;
+    let mut file =
+        File::create(srt_path).map_err(|e| CustomResult::error(Some(e.to_string()), None))?;
+    file.write_all(srt_content.as_bytes())
+        .map_err(|e| CustomResult::error(Some(e.to_string()), None))?;
     Ok(CustomResult::success(None, None))
 }

@@ -12,9 +12,11 @@
   "app": {
     "windows": [
       {
-        "title": "tts-tauri",
-        "width": 800,
-        "height": 600
+        "title": "tts-tauri-吾爱破解论坛首发",
+        "width": 1280,
+        "height": 720,
+        "minWidth": 1024,
+        "minHeight": 576
       }
     ],
     "security": {
@@ -30,6 +32,11 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "windows": {
+      "webviewInstallMode": {
+        "type": "embedBootstrapper"
+      }
+    }
   }
 }

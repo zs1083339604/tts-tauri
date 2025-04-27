@@ -4,18 +4,28 @@ import { invoke } from "@tauri-apps/api/core";
 import {RouterView, useRouter} from 'vue-router'
 import {
   Headset,
-  Menu as IconMenu,
-  Tools,
-  DocumentAdd,
-  Document
+  Tools
 } from '@element-plus/icons-vue'
-import { ElMessage, ElMessageBox } from 'element-plus';
+import { ElMessage, ElMessageBox, ElLoading } from 'element-plus';
 import {getCurrentWindow} from '@tauri-apps/api/window'
 import {connect} from './utils/sqlite';
 import { useVoicesStore } from "./store/voices";
 import { show_error } from "./utils/function";
 import mitter from "./utils/mitt";
 import { useOptionStore } from "./store/option";
+
+const loading = ElLoading.service({
+  lock: true,
+  text: '加载数据中……',
+  background: 'rgba(0, 0, 0, 0.7)',
+})
+
+const timer = setInterval(() => {
+  if(readObject.voices && readObject.option && readObject.exePath){
+    clearInterval(timer);
+    loading.close()
+  }
+}, 100);
 
 const readObject = reactive({
   voices: false,
@@ -36,11 +46,15 @@ connect().then(()=>{
   });
 
   // 获取app路径和设置对象
-  optionStore.getExePath().catch((error)=> show_error(error)).finally(()=>{
-    readObject.exePath = true
-  })
-  optionStore.getOption().catch((error)=> show_error(error)).finally(()=>{
-    readObject.option = true
+  optionStore.getExePath().then(()=>{
+    readObject.exePath = true;
+    return optionStore.getOption();
+  }).then(()=>{
+    readObject.option = true;
+  }).catch((error)=> {
+    show_error(error);
+    readObject.exePath = true;
+    readObject.option = true;
   })
 
 }).catch((error)=>{

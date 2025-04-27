@@ -62,7 +62,7 @@
     }
 
     const languageChange = (newValue)=>{
-        randerVoices(newValue);
+        randerVoices(newValue, true);
     }
 
     const subMarkerChange = (newValue)=>{
@@ -73,7 +73,7 @@
         ttsFun(toRaw(formData)).then((result)=>{
             console.log(result);
             // 载入base64音频
-            audioDom.value.src = result.data.audio;
+            audioDom.value.src = "data:audio/mp3;base64," + result.data.audio;
             audioDom.value.play();
         }).catch((error)=>{
             console.log(error)
@@ -84,6 +84,7 @@
         })
     }
 
+    // 试听功能，暂时放弃，有BUG
     const tryPlay = async ()=>{
         // 通过标点符号分隔句子进行配音
         if(formData.text == ""){
@@ -149,8 +150,11 @@
     // tts配音函数
     function ttsFun(ttsOption){
         return new Promise(async (resolve, reject) => {
-            // 保存tts的设置
-            optionStore.updataTTSOption(ttsOption);
+
+            if(optionStore.softOption.saveTTSOptions){
+                // 保存tts的设置
+                optionStore.updataTTSOption(ttsOption);
+            }
             
             if(ttsOption.text == ""){
                 reject("请输入要配音的内容");
@@ -163,8 +167,9 @@
             try {
                 const result = await invoke("start_tts", {data: {
                     ...ttsOption,
-                    root_path: optionStore.app_exe_path,
-                    open_folders: true
+                    // 额外参数
+                    root_path: optionStore.softOption.savePath,
+                    open_folders: optionStore.softOption.openFolders
                 }});
                 console.log(result);
                 resolve(result);
@@ -199,7 +204,7 @@
         randerVoices(formData.language);
     }
 
-    function randerVoices(language){
+    function randerVoices(language, enforcement = false){
         voicesList.value.length = 0;
         for(let i = 0; i < languageList.value.length; i++){
             const element = languageList.value[i];
@@ -210,6 +215,11 @@
                         value: voice.Name
                     });
                 });
+                
+                if(enforcement){
+                    formData.voice = voicesList.value[0].value;
+                }
+
                 if(formData.voice == ""){
                     formData.voice = voicesList.value[0].value;
                 }

@@ -11,7 +11,10 @@ export const useOptionStore = defineStore("option", {
                     const result = await invoke("get_exe_path");
                     if(result.code == 200){
                         this.app_exe_path = result.data.path.replaceAll("\\", "/");
-                        console.log(this.app_exe_path);
+                        if(this.app_exe_path.endsWith("/")){
+                            this.app_exe_path = this.app_exe_path.slice(0, -1);
+                        }
+
                         resolve();
                     }else{
                         reject(result.msg);
@@ -25,7 +28,6 @@ export const useOptionStore = defineStore("option", {
         getOption(){
             return new Promise((resolve, reject) => {
                 select("option", ["softOption", "ttsOption"], "id = ?", [1]).then((result) => {
-                    console.log(result);
                     if(result.rows[0].ttsOption == ""){
                         // 使用默认值
                         this.ttsOption = {
@@ -41,6 +43,17 @@ export const useOptionStore = defineStore("option", {
                     }else{
                         this.ttsOption = JSON.parse(result.rows[0].ttsOption);
                     }
+
+                    if(result.rows[0].softOption == ""){
+                        // 使用默认值
+                        this.softOption = {
+                            savePath: this.app_exe_path + "/output",
+                            openFolders: true,
+                            saveTTSOptions: true
+                        }
+                    }else{
+                        this.softOption = JSON.parse(result.rows[0].softOption);
+                    }
                     resolve();
                 }).catch((error)=>{
                     reject(error);
@@ -53,6 +66,18 @@ export const useOptionStore = defineStore("option", {
                 update("option", {ttsOption: JSON.stringify(obj)}, "id = ?", [1]).then((result) => {
                     // 深拷贝对象，上次写代码直接用toRaw就出Bug了
                     this.ttsOption = obj;
+                    resolve();
+                }).catch((error)=>{
+                    reject(error);
+                })
+            });
+        },
+        updataSoftOption(data){
+            return new Promise((resolve, reject) => {
+                const newObjString = JSON.stringify(data);
+                
+                update("option", {softOption: newObjString}, "id = ?", [1]).then((result) => {
+                    this.softOption = JSON.parse(newObjString);
                     resolve();
                 }).catch((error)=>{
                     reject(error);
