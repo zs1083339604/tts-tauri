@@ -23,7 +23,6 @@ export const useOptionStore = defineStore("option", {
                     reject(error)
                 }
             })
-            
         },
         getOption(){
             return new Promise((resolve, reject) => {

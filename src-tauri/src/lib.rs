@@ -1,5 +1,5 @@
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-use utils::api::{get_exe_path, get_voices_list, start_tts};
+use utils::api::{get_exe_path, get_voices_list, start_tts, get_app_version};
 pub mod utils;
 
 #[tauri::command]
@@ -18,7 +18,8 @@ pub fn run() {
             greet,
             get_voices_list,
             start_tts,
-            get_exe_path
+            get_exe_path,
+            get_app_version
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

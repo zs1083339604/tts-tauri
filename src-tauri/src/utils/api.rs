@@ -290,6 +290,17 @@ pub async fn get_exe_path() -> Result<CustomResult, CustomResult> {
     }
 }
 
+#[tauri::command]
+pub async fn get_app_version(app_handle: tauri::AppHandle) -> Result<CustomResult, CustomResult> {
+    let package_info = app_handle.package_info();
+    let version = package_info.version.to_string();
+
+    Ok(CustomResult::success(
+        None,
+        Some(json!({"version": version})),
+    ))
+}
+
 fn encode_audio_to_base64(file_path: &str) -> Result<String, CustomResult> {
     let audio_bytes = std::fs::read(file_path)
         .map_err(|e| CustomResult::error(Some(format!("读取音频文件失败：{}", e)), None))?;

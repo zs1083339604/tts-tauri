@@ -81,61 +81,54 @@ impl SubMaker {
             ));
         }
 
-        let rule = regex::Regex::new(
-            r#"[。！？？，；,()\[\]（）【】{}、\.\?!;:<>《》「」『』“”‘’"—…\-\n]+"#,
-        )
-        .map_err(|e| CustomResult::error(Some(e.to_string()), None))?;
-        let sentences: Vec<&str> = rule
-            .split(all_text)
-            .filter(|s| !s.trim().is_empty())
-            .collect();
+        let mut new_cues: Vec<Cue> = Vec::new();
+        let mut current_index = 0;
+        let mut last_match_end: isize = -1;
+        let mut match_start_index = 0;
+        let punctuation_re = regex::Regex::new(r#"[。！？？，；,()\[\]（）【】{}、\.\?!;:<>《》「」『』“”‘’"…\n]+"#).map_err(|e| CustomResult::error(Some(e.to_string()), None))?;
 
-        let mut current_sentence_index = 0;
-        let mut current_cue_index = 0;
-        let mut current_sentence = sentences.get(current_sentence_index).copied();
-        let mut new_cues = Vec::new();
-        let mut current_cue: Option<Cue> = None;
+        for i in 0..self.cues.len() {
+            let cue = &self.cues[i];
+            let search_text = &cue.content;
 
-        for cue in &self.cues {
-            current_cue_index += 1;
-
-            if current_cue.is_none() {
-                current_cue = Some(cue.clone());
-            } else {
-                let mut unwrapped_cue = current_cue.unwrap();
-                unwrapped_cue.end = cue.end.clone();
-                unwrapped_cue.content.push_str(&cue.content);
-                current_cue = Some(unwrapped_cue);
-            }
-
-            // 判断当前和下一个字幕是否为英文、数字
-            let is_alphanumeric = regex::Regex::new(r"^[a-zA-Z0-9\s]+$")
-                .map_err(|e| CustomResult::error(Some(e.to_string()), None))?;
-            let next_cue_content = self.cues.get(current_cue_index).map(|c| &c.content);
-            if is_alphanumeric.is_match(&cue.content)
-                && next_cue_content.map_or(false, |c| is_alphanumeric.is_match(c))
-            {
-                if let Some(ref mut c) = current_cue {
-                    c.content.push(' ');
+            if let Some(position) = all_text[current_index..].find(search_text) {
+                let position = current_index + position;
+                if last_match_end == -1 {
+                    last_match_end = position as isize;
                 }
-            }
 
-            // 如果当前字幕内容包含当前句子的内容，则完成一个句子
-            if let (Some(ref mut c), Some(sentence)) = (&mut current_cue, current_sentence) {
-                if c.content
-                    .replace(" ", "")
-                    .contains(&sentence.replace(" ", ""))
-                {
-                    new_cues.push(c.clone());
-                    current_cue = None;
-                    current_sentence_index += 1;
-                    current_sentence = sentences.get(current_sentence_index).copied();
+                let mut next_position = position + search_text.len();
+                let mut max_while = 0;
+                let mut chars = all_text[next_position..].chars();
+
+                // 如果是英文，这里有时会变成空格，需要过滤一下
+                while let Some(next_char) = chars.next() {
+                    // 如果不是空格 或 超过了最大限制则退出
+                    if next_char != ' ' || max_while == 10 {
+                        break;
+                    }
+                    next_position += next_char.len_utf8();
+                    max_while += 1;
                 }
-            }
-        }
 
-        if let Some(cue) = current_cue {
-            new_cues.push(cue);
+                // 判断下一个字符是否是标点
+                let next_char = all_text[next_position..].chars().next().unwrap_or(' ');
+                if punctuation_re.is_match(&next_char.to_string()) {
+                    let start = self.cues[match_start_index].start.clone();
+                    let end_pos = next_position;
+                    let extracted_text = &all_text[last_match_end as usize..end_pos];
+                    new_cues.push(Cue {
+                        index: cue.index,
+                        start,
+                        end: cue.end.clone(),
+                        content: extracted_text.to_string(),
+                    });
+                    last_match_end = -1;
+                    match_start_index = i + 1;
+                }
+
+                current_index = position;
+            }
         }
 
         self.cues = new_cues;

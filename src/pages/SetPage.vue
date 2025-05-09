@@ -70,6 +70,13 @@
                     </div>
                 </div>
             </el-form-item>
+            <el-form-item label="当前版本">
+                <!-- 插眼：软件版本，本来应该从Rust获取，懒得写了 -->
+                <div class="form-item-flex">
+                    <span style="margin-right: 20px;">0.2.0</span>
+                    <span>2025-05-09 更新</span>
+                </div>
+            </el-form-item>
             <el-form-item>
                 <el-button type="primary" @click="onSubmit">保存</el-button>
             </el-form-item>
