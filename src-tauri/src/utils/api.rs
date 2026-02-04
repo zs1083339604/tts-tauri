@@ -124,10 +124,13 @@ pub async fn start_tts(data: TTSData) -> Result<CustomResult, CustomResult> {
             .parse()
             .unwrap(),
     );
-    request.headers_mut().insert("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Edg/130.0.0.0".parse().unwrap());
     request
         .headers_mut()
-        .insert("Accept-Encoding", "gzip, deflate, br".parse().unwrap());
+        .insert("Sec-WebSocket-Version", "13".parse().unwrap());
+    request.headers_mut().insert("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0".parse().unwrap());
+    request
+        .headers_mut()
+        .insert("Accept-Encoding", "gzip, deflate, br, zstd".parse().unwrap());
     request
         .headers_mut()
         .insert("Accept-Language", "en-US,en;q=0.9".parse().unwrap());
